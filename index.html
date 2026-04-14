@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>House Chores</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F0EA;
+    --card-bg: #FFFFFF;
+    --text-primary: #2C2416;
+    --text-secondary: #8C7E6A;
+    --text-muted: #B8AD9E;
+    --check-done: #A3B18A;
+    --border: #E8E0D4;
+    --shadow: rgba(44, 36, 22, 0.06);
+    --section-daily: #D4A373;
+    --section-weekly: #7EA8BE;
+    --section-room: #C48B9F;
+    --favor-bg: #FFF8F0;
+    --favor-border: #F0D9BE;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 36px 24px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+    flex-shrink: 0;
+  }
+
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .header .date {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .progress-bar-track {
+    width: 200px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--check-done);
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .progress-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .sections-container {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .section { margin-bottom: 28px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-left: 4px;
+  }
+
+  .section-icon {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-primary);
+  }
+
+  .section-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    color: white;
+  }
+
+  .chore-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .chore-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 10px var(--shadow);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    animation: cardIn 0.5s ease backwards;
+  }
+
+  .chore-card:active { transform: scale(0.98); }
+  .chore-card.done { opacity: 0.5; }
+  .chore-card.done .chore-name {
+    text-decoration: line-through;
+    text-decoration-color: var(--text-muted);
+  }
+
+  /* Favor styling on card */
+  .chore-card.has-favor {
+    background: var(--favor-bg);
+    border: 1.5px solid var(--favor-border);
+  }
+
+  .favor-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    background: var(--section-daily);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    line-height: 1.4;
+  }
+
+  .favor-note {
+    font-size: 0.7rem;
+    color: var(--section-daily);
+    font-weight: 500;
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  .chore-card .accent-stripe {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+
+  .check-bubble {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    border-radius: 50%;
+    border: 2.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    margin-top: 1px;
+  }
+
+  .check-bubble svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .chore-card.done .check-bubble {
+    border-color: var(--check-done);
+    background: var(--check-done);
+  }
+
+  .chore-card.done .check-bubble svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .chore-info { flex: 1; min-width: 0; }
+
+  .chore-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    margin-bottom: 3px;
+    line-height: 1.3;
+    transition: all 0.3s ease;
+  }
+
+  .chore-assignee {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .assignee-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .chore-emoji {
+    font-size: 1.4rem;
+    line-height: 1;
+    margin-top: 2px;
+    min-width: 26px;
+    text-align: center;
+  }
+
+  .room-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  /* Favor button on card */
+  .favor-btn {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.3px;
+  }
+
+  .favor-btn:hover, .favor-btn:active {
+    border-color: var(--section-daily);
+    color: var(--section-daily);
+  }
+
+  .undo-favor-btn {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--section-daily);
+    background: none;
+    border: 1.5px solid var(--favor-border);
+    border-radius: 12px;
+    padding: 3px 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.3px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .footer .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .legend-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+
+  .reset-note {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .confetti-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: confettiFall 1.2s ease-out forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translateY(300px) rotate(720deg) scale(0); opacity: 0; }
+  }
+
+  .all-done-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245,240,234,0.88);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+
+  .all-done-overlay.visible { opacity: 1; pointer-events: auto; }
+  .all-done-msg { text-align: center; }
+  .all-done-msg .emoji { font-size: 4rem; margin-bottom: 12px; }
+
+  .all-done-msg h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .all-done-msg p { font-size: 1rem; color: var(--text-secondary); }
+
+  /* ====== FAVOR MODAL ====== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(44,36,22,0.35);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+
+  .modal {
+    background: var(--card-bg);
+    border-radius: 22px;
+    padding: 28px 32px 24px;
+    width: 380px;
+    max-width: 90vw;
+    box-shadow: 0 12px 40px rgba(44,36,22,0.15);
+    transform: scale(0.95);
+    transition: transform 0.25s ease;
+  }
+
+  .modal-overlay.visible .modal { transform: scale(1); }
+
+  .modal h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .modal p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+
+  .modal-chore-name {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .modal-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .modal-person-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .modal-person-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .modal-person-btn:active { transform: scale(0.98); }
+
+  .modal-person-btn:hover {
+    border-color: var(--section-daily);
+    background: var(--favor-bg);
+  }
+
+  .modal-person-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .modal-person-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: auto;
+  }
+
+  .modal-cancel {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--text-secondary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .chore-grid { grid-template-columns: 1fr; }
+    .app { padding: 24px 18px 20px; }
+    .header h1 { font-size: 1.9rem; }
+  }
+
+  @media (min-width: 900px) and (max-height: 850px) {
+    .app { max-width: 1100px; padding: 18px 40px 14px; }
+    .header { margin-bottom: 14px; }
+    .header h1 { font-size: 1.9rem; }
+    .header .date { font-size: 0.85rem; }
+    .progress-row { margin-top: 10px; }
+    .section { margin-bottom: 16px; }
+    .section-header { margin-bottom: 8px; }
+    .chore-card { padding: 12px 16px; border-radius: 14px; }
+    .chore-grid { gap: 10px; }
+    .chore-name { font-size: 0.95rem; }
+    .chore-emoji { font-size: 1.2rem; }
+    .check-bubble { width: 26px; height: 26px; min-width: 26px; }
+    .check-bubble svg { width: 12px; height: 12px; }
+    .footer { padding-top: 10px; margin-top: 6px; }
+    .reset-note { margin-top: 4px; }
+  }
+
+  @media (min-width: 1000px) and (max-height: 850px) {
+    .app { max-width: 1200px; }
+    .chore-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+<div class="confetti-container" id="confetti"></div>
+<div class="all-done-overlay" id="allDoneOverlay">
+  <div class="all-done-msg">
+    <div class="emoji">🎉</div>
+    <h2>All Done!</h2>
+    <p>Great job, guys. Enjoy the rest of your day.</p>
+  </div>
+</div>
+
+<!-- Favor Modal -->
+<div class="modal-overlay" id="favorModal">
+  <div class="modal" id="favorModalContent"></div>
+</div>
+
+<script>
+  // ====== CONFIG ======
+  const HOUSEMATES = ['Josiah', 'Eli', 'Isaac', 'Caleb'];
+  const COLORS = {
+    'Josiah': '#D4A373',
+    'Eli':    '#A3B18A',
+    'Isaac':  '#7EA8BE',
+    'Caleb':  '#C48B9F'
+  };
+
+  const ROOM_A = { members: ['Josiah', 'Caleb'], label: "Josiah & Caleb's Room" };
+  const ROOM_B = { members: ['Eli', 'Isaac'],    label: "Eli & Isaac's Room" };
+
+  const DAILY_CHORES = [
+    { name: 'Dishes', emoji: '🍽️' },
+    { name: 'Sweep & Take Trash Out', emoji: '🗑️' },
+    { name: 'Clean All Surfaces', emoji: '✨' },
+    { name: 'Pick Up Living Room', emoji: '🛋️' },
+  ];
+
+  const WEEKLY_HOUSE_CHORES = [
+    { name: 'Trash & Recycling to Road', emoji: '♻️' },
+    { name: 'Clean Downstairs Bathroom', emoji: '🚿' },
+    { name: 'Vacuum the Couches', emoji: '🛋️' },
+    { name: 'Clean the Fridge', emoji: '🧊' },
+  ];
+
+  const ROOM_CHORES = [
+    { name: 'Clean the Restroom', emoji: '🚽' },
+    { name: 'Sweep the Floors', emoji: '🧹' },
+  ];
+
+  // ====== DATE HELPERS ======
+  function getDayOfYear() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    return Math.floor((now - start) / (1000 * 60 * 60 * 24));
+  }
+
+  function getWeekOfYear() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 1);
+    return Math.floor(Math.floor((now - start) / (1000 * 60 * 60 * 24)) / 7);
+  }
+
+  function getDateString() {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric'
+    });
+  }
+
+  function getTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+
+  function getTomorrowKey() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+
+  function getWeekKey() {
+    return `${new Date().getFullYear()}-w${getWeekOfYear()}`;
+  }
+
+  function getNextWeekKey() {
+    return `${new Date().getFullYear()}-w${getWeekOfYear() + 1}`;
+  }
+
+  // ====== BASE ASSIGNMENT LOGIC (before favors) ======
+  function getBaseDailyAssignments(dayOverride) {
+    const day = dayOverride !== undefined ? dayOverride : getDayOfYear();
+    return DAILY_CHORES.map((chore, i) => {
+      const idx = (i + day) % HOUSEMATES.length;
+      const name = HOUSEMATES[idx];
+      return { ...chore, assignee: name, originalAssignee: name, color: COLORS[name], id: 'daily_' + i, type: 'daily' };
+    });
+  }
+
+  function getBaseWeeklyHouseAssignments(weekOverride) {
+    const week = weekOverride !== undefined ? weekOverride : getWeekOfYear();
+    return WEEKLY_HOUSE_CHORES.map((chore, i) => {
+      const idx = (i + week) % HOUSEMATES.length;
+      const name = HOUSEMATES[idx];
+      return { ...chore, assignee: name, originalAssignee: name, color: COLORS[name], id: 'weekly_' + i, type: 'weekly' };
+    });
+  }
+
+  function getBaseRoomAssignments(weekOverride) {
+    const week = weekOverride !== undefined ? weekOverride : getWeekOfYear();
+    const assignments = [];
+    [ROOM_A, ROOM_B].forEach((room, roomIdx) => {
+      ROOM_CHORES.forEach((chore, choreIdx) => {
+        const personIdx = (week + choreIdx) % 2;
+        const assignee = room.members[personIdx];
+        assignments.push({
+          ...chore,
+          assignee,
+          originalAssignee: assignee,
+          color: COLORS[assignee],
+          roomLabel: room.label,
+          id: `room_${roomIdx}_${choreIdx}`,
+          type: 'room'
+        });
+      });
+    });
+    return assignments;
+  }
+
+  // ====== FAVOR SYSTEM ======
+  // A favor is stored as: { choreId, doer, originalOwner, type('daily'|'weekly'|'room') }
+  // Daily favors: stored under today's key; payback stored under tomorrow's key
+  // Weekly favors: stored under this week's key; payback stored under next week's key
+
+  function getFavorKey(period) {
+    // period = 'daily_2025-3-14' or 'weekly_2025-w15'
+    return 'favors_' + period;
+  }
+
+  function loadFavors(periodKey) {
+    try {
+      const s = localStorage.getItem(getFavorKey(periodKey));
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  }
+
+  function saveFavors(periodKey, favors) {
+    localStorage.setItem(getFavorKey(periodKey), JSON.stringify(favors));
+  }
+
+  // Load current favors
+  function getCurrentDailyFavors() { return loadFavors('daily_' + getTodayKey()); }
+  function getCurrentWeeklyFavors() { return loadFavors('weekly_' + getWeekKey()); }
+
+  // Apply favors: swap assignments
+  function applyFavors(assignments, favors) {
+    const result = assignments.map(a => ({ ...a }));
+    favors.forEach(f => {
+      const item = result.find(a => a.id === f.choreId);
+      if (item) {
+        item.assignee = f.doer;
+        item.color = COLORS[f.doer];
+        item.favorDoer = f.doer;
+        item.favorOriginal = f.originalOwner;
+      }
+    });
+    return result;
+  }
+
+  // Get final assignments with favors applied
+  function getDailyAssignments() {
+    const base = getBaseDailyAssignments();
+    return applyFavors(base, getCurrentDailyFavors());
+  }
+
+  function getWeeklyHouseAssignments() {
+    const base = getBaseWeeklyHouseAssignments();
+    return applyFavors(base, getCurrentWeeklyFavors());
+  }
+
+  function getRoomAssignments() {
+    const base = getBaseRoomAssignments();
+    return applyFavors(base, getCurrentWeeklyFavors());
+  }
+
+  // ====== REGISTER A FAVOR ======
+  function registerFavor(choreId, choreType, doer, originalOwner) {
+    if (choreType === 'daily') {
+      // 1. Save favor for today
+      const todayFavors = getCurrentDailyFavors();
+      todayFavors.push({ choreId, doer, originalOwner, type: 'daily' });
+      saveFavors('daily_' + getTodayKey(), todayFavors);
+
+      // 2. Schedule payback: find what the DOER would normally have tomorrow,
+      //    and assign it to the originalOwner instead.
+      //    We find the doer's chore tomorrow and swap it.
+      const tomorrowBase = getBaseDailyAssignments(getDayOfYear() + 1);
+      const doerChoreTomorrow = tomorrowBase.find(c => c.originalAssignee === doer);
+      if (doerChoreTomorrow) {
+        const tomorrowFavors = loadFavors('daily_' + getTomorrowKey());
+        // The originalOwner will do the doer's chore tomorrow as payback
+        tomorrowFavors.push({
+          choreId: doerChoreTomorrow.id,
+          doer: originalOwner,
+          originalOwner: doer,
+          type: 'daily',
+          isPayback: true
+        });
+        saveFavors('daily_' + getTomorrowKey(), tomorrowFavors);
+      }
+    } else {
+      // Weekly (house or room)
+      const weekFavors = getCurrentWeeklyFavors();
+      weekFavors.push({ choreId, doer, originalOwner, type: choreType });
+      saveFavors('weekly_' + getWeekKey(), weekFavors);
+
+      // Payback next week: find doer's chore next week and assign to originalOwner
+      const nextWeek = getWeekOfYear() + 1;
+      let nextWeekBase;
+      if (choreType === 'weekly') {
+        nextWeekBase = getBaseWeeklyHouseAssignments(nextWeek);
+      } else {
+        nextWeekBase = getBaseRoomAssignments(nextWeek);
+      }
+      const doerChoreNext = nextWeekBase.find(c => c.originalAssignee === doer);
+      if (doerChoreNext) {
+        const nextFavors = loadFavors('weekly_' + getNextWeekKey());
+        nextFavors.push({
+          choreId: doerChoreNext.id,
+          doer: originalOwner,
+          originalOwner: doer,
+          type: choreType,
+          isPayback: true
+        });
+        saveFavors('weekly_' + getNextWeekKey(), nextFavors);
+      }
+    }
+  }
+
+  // Undo a favor
+  function undoFavor(choreId, choreType) {
+    if (choreType === 'daily') {
+      let todayFavors = getCurrentDailyFavors();
+      const favor = todayFavors.find(f => f.choreId === choreId);
+      if (favor) {
+        // Remove today's favor
+        todayFavors = todayFavors.filter(f => f.choreId !== choreId);
+        saveFavors('daily_' + getTodayKey(), todayFavors);
+        // Remove the payback for tomorrow
+        let tomorrowFavors = loadFavors('daily_' + getTomorrowKey());
+        tomorrowFavors = tomorrowFavors.filter(f =>
+          !(f.doer === favor.originalOwner && f.originalOwner === favor.doer && f.isPayback)
+        );
+        saveFavors('daily_' + getTomorrowKey(), tomorrowFavors);
+      }
+    } else {
+      let weekFavors = getCurrentWeeklyFavors();
+      const favor = weekFavors.find(f => f.choreId === choreId);
+      if (favor) {
+        weekFavors = weekFavors.filter(f => f.choreId !== choreId);
+        saveFavors('weekly_' + getWeekKey(), weekFavors);
+        let nextFavors = loadFavors('weekly_' + getNextWeekKey());
+        nextFavors = nextFavors.filter(f =>
+          !(f.doer === favor.originalOwner && f.originalOwner === favor.doer && f.isPayback)
+        );
+        saveFavors('weekly_' + getNextWeekKey(), nextFavors);
+      }
+    }
+  }
+
+  // ====== STATE ======
+  function loadState(key) {
+    try {
+      const s = localStorage.getItem(key);
+      return s ? JSON.parse(s) : {};
+    } catch { return {}; }
+  }
+
+  function saveState(key, state) {
+    localStorage.setItem(key, JSON.stringify(state));
+  }
+
+  let dailyKey = 'chores_daily_' + getTodayKey();
+  let weeklyKey = 'chores_weekly_' + getWeekKey();
+  let dailyState = loadState(dailyKey);
+  let weeklyState = loadState(weeklyKey);
+
+  // ====== RENDER ======
+  const checkSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+  function renderCard(item, isDone, delay, stateType) {
+    const roomLine = item.roomLabel ? `<div class="room-label">${item.roomLabel}</div>` : '';
+    const hasFavor = !!item.favorDoer;
+    const favorClass = hasFavor ? 'has-favor' : '';
+    const favorBadge = hasFavor
+      ? `<div class="favor-badge">Favor</div>`
+      : '';
+    const favorNote = hasFavor
+      ? `<div class="favor-note">${item.favorDoer} covering for ${item.favorOriginal}</div>`
+      : '';
+
+    // Show favor button only if no active favor on this card and card isn't done
+    const favorBtn = (!hasFavor && !isDone)
+      ? `<button class="favor-btn" onclick="event.stopPropagation(); openFavorModal('${item.id}', '${stateType}', '${item.type || stateType}')">🤝 Favor</button>`
+      : '';
+
+    // Show undo button if there's an active favor (and it's not a payback)
+    const allFavors = stateType === 'daily' ? getCurrentDailyFavors() : getCurrentWeeklyFavors();
+    const thisFavor = allFavors.find(f => f.choreId === item.id);
+    const undoBtn = (hasFavor && thisFavor && !thisFavor.isPayback)
+      ? `<button class="undo-favor-btn" onclick="event.stopPropagation(); doUndoFavor('${item.id}', '${item.type || stateType}')">Undo</button>`
+      : '';
+
+    return `
+      <div class="chore-card ${isDone ? 'done' : ''} ${favorClass}"
+           data-id="${item.id}" data-state="${stateType}"
+           style="animation-delay: ${delay}s"
+           onclick="toggleChore('${item.id}', '${stateType}')">
+        <div class="accent-stripe" style="background: ${item.color}"></div>
+        ${favorBadge}
+        <div class="check-bubble">${checkSVG}</div>
+        <div class="chore-info">
+          ${roomLine}
+          <div class="chore-name">${item.name}</div>
+          <div class="chore-assignee" style="color: ${item.color}">
+            <span class="assignee-dot" style="background: ${item.color}"></span>
+            ${item.assignee}
+          </div>
+          ${favorNote}
+        </div>
+        <div class="chore-emoji">${item.emoji}</div>
+        ${favorBtn}
+        ${undoBtn}
+      </div>`;
+  }
+
+  function render() {
+    const daily = getDailyAssignments();
+    const weeklyHouse = getWeeklyHouseAssignments();
+    const room = getRoomAssignments();
+
+    const totalDone =
+      daily.filter(a => dailyState[a.id]).length +
+      weeklyHouse.filter(a => weeklyState[a.id]).length +
+      room.filter(a => weeklyState[a.id]).length;
+    const total = daily.length + weeklyHouse.length + room.length;
+    const pct = total > 0 ? Math.round((totalDone / total) * 100) : 0;
+
+    let d = 0;
+
+    document.getElementById('app').innerHTML = `
+      <div class="header">
+        <h1>House Chores</h1>
+        <div class="date">${getDateString()}</div>
+        <div class="progress-row">
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: ${pct}%"></div>
+          </div>
+          <span class="progress-text">${totalDone} / ${total}</span>
+        </div>
+      </div>
+
+      <div class="sections-container">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon" style="background: var(--section-daily)"></div>
+            <div class="section-title">Daily Chores</div>
+            <span class="section-badge" style="background: var(--section-daily)">Rotates Daily</span>
+          </div>
+          <div class="chore-grid">
+            ${daily.map(a => renderCard(a, dailyState[a.id], (++d) * 0.05, 'daily')).join('')}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon" style="background: var(--section-weekly)"></div>
+            <div class="section-title">Weekly House Chores</div>
+            <span class="section-badge" style="background: var(--section-weekly)">Rotates Weekly</span>
+          </div>
+          <div class="chore-grid">
+            ${weeklyHouse.map(a => renderCard(a, weeklyState[a.id], (++d) * 0.05, 'weekly')).join('')}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon" style="background: var(--section-room)"></div>
+            <div class="section-title">Weekly Room Chores</div>
+            <span class="section-badge" style="background: var(--section-room)">Rotates Weekly</span>
+          </div>
+          <div class="chore-grid">
+            ${room.map(a => renderCard(a, weeklyState[a.id], (++d) * 0.05, 'weekly')).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="legend">
+          ${HOUSEMATES.map(name => `
+            <div class="legend-item">
+              <div class="legend-dot" style="background: ${COLORS[name]}"></div>
+              ${name}
+            </div>
+          `).join('')}
+        </div>
+        <div class="reset-note">Daily chores reset at midnight · Weekly chores reset each new week · Tap 🤝 Favor to cover someone's chore</div>
+      </div>
+    `;
+
+    const overlay = document.getElementById('allDoneOverlay');
+    if (totalDone === total && total > 0) {
+      overlay.classList.add('visible');
+    } else {
+      overlay.classList.remove('visible');
+    }
+  }
+
+  // ====== FAVOR MODAL ======
+  function openFavorModal(choreId, stateType, choreType) {
+    // Find the chore details
+    let allChores;
+    if (stateType === 'daily') {
+      allChores = getDailyAssignments();
+    } else {
+      allChores = [...getWeeklyHouseAssignments(), ...getRoomAssignments()];
+    }
+    const chore = allChores.find(c => c.id === choreId);
+    if (!chore) return;
+
+    const others = HOUSEMATES.filter(n => n !== chore.assignee);
+    const paybackLabel = choreType === 'daily'
+      ? 'gets their chore tomorrow'
+      : 'gets their chore next week';
+
+    document.getElementById('favorModalContent').innerHTML = `
+      <h3>🤝 Do a Favor</h3>
+      <p>
+        Who is covering <span class="modal-chore-name">${chore.assignee}'s</span> chore
+        "<span class="modal-chore-name">${chore.name}</span>"?
+        <br>They'll take on the helper's chore ${choreType === 'daily' ? 'tomorrow' : 'next week'} in return.
+      </p>
+      <div class="modal-label">Select who's helping</div>
+      <div class="modal-person-list">
+        ${others.map(name => `
+          <button class="modal-person-btn" onclick="confirmFavor('${choreId}', '${choreType}', '${name}', '${chore.assignee}')">
+            <div class="modal-person-dot" style="background: ${COLORS[name]}"></div>
+            ${name}
+            <span class="modal-person-sub">${paybackLabel}</span>
+          </button>
+        `).join('')}
+      </div>
+      <button class="modal-cancel" onclick="closeFavorModal()">Cancel</button>
+    `;
+
+    document.getElementById('favorModal').classList.add('visible');
+  }
+
+  function closeFavorModal() {
+    document.getElementById('favorModal').classList.remove('visible');
+  }
+
+  function confirmFavor(choreId, choreType, doer, originalOwner) {
+    registerFavor(choreId, choreType, doer, originalOwner);
+    closeFavorModal();
+    render();
+  }
+
+  function doUndoFavor(choreId, choreType) {
+    undoFavor(choreId, choreType);
+    render();
+  }
+
+  // Close modal on background tap
+  document.getElementById('favorModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('favorModal')) closeFavorModal();
+  });
+
+  // ====== INTERACTIONS ======
+  function toggleChore(id, stateType) {
+    if (stateType === 'daily') {
+      dailyState[id] = !dailyState[id];
+      saveState(dailyKey, dailyState);
+    } else {
+      weeklyState[id] = !weeklyState[id];
+      saveState(weeklyKey, weeklyState);
+    }
+
+    if ((stateType === 'daily' ? dailyState[id] : weeklyState[id])) {
+      const card = document.querySelector(`[data-id="${id}"]`);
+      if (card) spawnConfetti(card);
+    }
+
+    render();
+  }
+
+  function spawnConfetti(el) {
+    const rect = el.getBoundingClientRect();
+    const container = document.getElementById('confetti');
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const colors = ['#D4A373','#A3B18A','#7EA8BE','#C48B9F','#E8D5B7'];
+    for (let i = 0; i < 12; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = cx + (Math.random() - 0.5) * 60 + 'px';
+      piece.style.top = cy + 'px';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.transform = `rotate(${Math.random()*360}deg)`;
+      container.appendChild(piece);
+      setTimeout(() => piece.remove(), 1300);
+    }
+  }
+
+  // ====== AUTO-REFRESH AT MIDNIGHT ======
+  function msUntilMidnight() {
+    const now = new Date();
+    const mid = new Date(now);
+    mid.setHours(24, 0, 0, 0);
+    return mid - now;
+  }
+
+  function scheduleRefresh() {
+    setTimeout(() => {
+      dailyKey = 'chores_daily_' + getTodayKey();
+      weeklyKey = 'chores_weekly_' + getWeekKey();
+      dailyState = loadState(dailyKey);
+      weeklyState = loadState(weeklyKey);
+      render();
+      scheduleRefresh();
+    }, msUntilMidnight() + 1000);
+  }
+
+  // ====== INIT ======
+  render();
+  scheduleRefresh();
+
+  document.getElementById('allDoneOverlay').addEventListener('click', () => {
+    document.getElementById('allDoneOverlay').classList.remove('visible');
+  });
+</script>
+</body>
+</html>
